@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+     <div>
+                <h3>Your Id: <span id="myId"></span></h3>
+                <h3>Online Users (click to connect)</h3>
+                <div id="users">
+
+                </div>
+                <video id="local-video"></video>
+                <video id="remote-video"></video>
+            </div>
+            </div>
+            <p id="status"></p>
+        </div>
+
+       <script src = "/socket.io/socket.io.js"></script>
+
+        <script>
+            const socket = io();
+        </script>
+</body>
+</html>
