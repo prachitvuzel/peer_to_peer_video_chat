@@ -24,6 +24,38 @@
 
         <script>
             const socket = io();
+            let resgisteredUsers = []
+            let yourId = ""
+            socket.on("connect",()=>{
+                yourId = socket.id
+                const idField = document.querySelector("#myId")
+               idField.innerText = yourId
+            })
+              
+        
+              socket.on("user:joined",async (id) =>{
+    
+             
+                 const userBox = document.querySelector("#users")
+        
+                const response = await fetch("/users",{method: "GET"})
+                const users = await response.json()
+           
+                users.forEach(async (element) => {
+                  
+                    if (element[0]!= yourId && !(resgisteredUsers.includes(element[0]))){
+                     
+                     const btn = document.createElement("button")
+                     btn.innerText = element[0]
+                     userBox.appendChild(btn)
+
+                    resgisteredUsers.push(element[0])
+                    }
+              })
+              })
+        
+
+             
         </script>
 </body>
 </html>
