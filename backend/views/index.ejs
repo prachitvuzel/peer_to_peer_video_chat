@@ -32,6 +32,43 @@
                idField.innerText = yourId
             })
               
+
+            //webRTC connection
+            const peer = new RTCPeerConnection({
+                iceServers: [
+                    {
+                        urls: "stun:stun.stunprotocol.org"
+                    }
+                ]
+            })
+
+            const createCall = async (to) =>{
+                const status = document.querySelector("#status")
+
+                status.innerText = `Calling ${to}`
+
+                const localOffer = await peer.createOffer()
+
+                await peer.setLocalDescription(new RTCSessionDescription(localOffer))
+                socket.emit("outgoing:call", {fromOffer: localOffer, receiver: to })
+            }
+            
+            socket.on("incoming-call",async (data)=>{
+                const {from, offer} = data
+               
+                console.log("incoming call")
+                await peer.setRemoteDescription(new RTCSessionDescription(offer))
+                const answer = await peer.createAnswer()
+                await peer.setLocalDescription(new RTCSessionDescription(answer))
+                
+                socket.emit("call-accepted", {answer: answer, to: from})
+            })
+            
+            socket.on("incoming-answer", async (data) =>{
+                const {from, offer} = data
+                console.log("incoming answer")
+                await peer.setRemoteDescription(new RTCSessionDescription(offer))
+            })
         
               socket.on("user:joined",async (id) =>{
     
@@ -44,11 +81,10 @@
                 users.forEach(async (element) => {
                   
                     if (element[0]!= yourId && !(resgisteredUsers.includes(element[0]))){
-                     
                      const btn = document.createElement("button")
                      btn.innerText = element[0]
+                     btn.setAttribute("onclick", `createCall("${element[0]}")`)
                      userBox.appendChild(btn)
-
                     resgisteredUsers.push(element[0])
                     }
               })

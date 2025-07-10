@@ -4,7 +4,6 @@ import http from "http";
 import ejs from "ejs";
 import path from "path";
 import dotenv from "dotenv";
-import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -21,11 +20,24 @@ io.on("connection", (socket) => {
 
   io.emit("user:joined", socket.id);
 
+  socket.on("outgoing:call", (data) => {
+    const { fromOffer, receiver } = data;
+    console.log("outgoing call");
+    socket
+      .to(receiver)
+      .emit("incoming-call", { from: socket.id, offer: fromOffer });
+  });
+
+  socket.on("call-accepted", (data) => {
+    const { answer, to } = data;
+    console.log("call accepted");
+    socket.to(to).emit("incoming-answer", { from: socket.id, offer: answer });
+  });
+
   socket.on("disconnect", () => {
     console.log(`user disconnected: ${socket.id}`);
   });
 });
-
 
 app.use(express.static(path.resolve("./public")));
 app.set("view engine", "ejs");
