@@ -21,16 +21,14 @@ io.on("connection", (socket) => {
   io.emit("user:joined", socket.id);
 
   socket.on("outgoing:call", (data) => {
-    const { fromOffer, receiver } = data;
-    console.log("outgoing call");
+      const { fromOffer, receiver } = data;
     socket
       .to(receiver)
-      .emit("incoming-call", { from: socket.id, offer: fromOffer });
+      .emit("incoming-call", { caller: socket.id, offer: fromOffer });
   });
 
   socket.on("call-accepted", (data) => {
-    const { answer, to } = data;
-    console.log("call accepted");
+      const { answer, to } = data;
     socket.to(to).emit("incoming-answer", { from: socket.id, offer: answer });
   });
 

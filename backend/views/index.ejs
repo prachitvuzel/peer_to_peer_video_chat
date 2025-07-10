@@ -37,36 +37,90 @@
             const peer = new RTCPeerConnection({
                 iceServers: [
                     {
-                        urls: "stun:stun.stunprotocol.org"
+                        urls: "stun:stun.l.google.com:19302"
                     }
                 ]
             })
 
+
+            peer.onconnectionstatechange = () => {
+                    console.log("Connection state changed to:", peer.connectionState);
+
+                    if (peer.connectionState === "connected") {
+                        console.log("Peer-to-peer connection established!");
+                    }
+              };
+            
+
+            const getUserMedia = async () => {
+                  const localStream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio:true
+                     });
+
+                    const videoLocal = document.querySelector("#local-video");
+                    videoLocal.srcObject = localStream;
+                    videoLocal.play()
+
+
+
+                for (const track of localStream.getTracks()){
+                    peer.addTrack(track, localStream)
+                }
+
+                }
+
+            getUserMedia()
+           
             const createCall = async (to) =>{
                 const status = document.querySelector("#status")
-
                 status.innerText = `Calling ${to}`
+             
 
                 const localOffer = await peer.createOffer()
 
                 await peer.setLocalDescription(new RTCSessionDescription(localOffer))
                 socket.emit("outgoing:call", {fromOffer: localOffer, receiver: to })
             }
+
+
+            peer.ontrack = async (event) =>{
+                const status = document.querySelector("#status")
+                status.innerText = "Incoming stream"
+
+                const remoteVideo = document.querySelector("#remote-video")
+
+                remoteVideo.srcObject = event.streams[0]
+                let playPromise =  remoteVideo.play()
+
+                  if (playPromise !== undefined) {
+                        playPromise.then(_ => {
+                        // Automatic playback started!
+                        // Show playing UI.
+                        })
+                        .catch(error => {
+                        // Auto-play was prevented
+                        // Show paused UI.
+                        });
+                    }
+
+         
+            }
             
             socket.on("incoming-call",async (data)=>{
-                const {from, offer} = data
-               
-                console.log("incoming call")
+                const {caller, offer} = data
                 await peer.setRemoteDescription(new RTCSessionDescription(offer))
                 const answer = await peer.createAnswer()
                 await peer.setLocalDescription(new RTCSessionDescription(answer))
                 
-                socket.emit("call-accepted", {answer: answer, to: from})
-            })
+                
+                socket.emit("call-accepted", {answer: answer, to: caller})
+
+            })  
             
             socket.on("incoming-answer", async (data) =>{
                 const {from, offer} = data
-                console.log("incoming answer")
+
                 await peer.setRemoteDescription(new RTCSessionDescription(offer))
             })
         
@@ -83,7 +137,7 @@
                     if (element[0]!= yourId && !(resgisteredUsers.includes(element[0]))){
                      const btn = document.createElement("button")
                      btn.innerText = element[0]
-                     btn.setAttribute("onclick", `createCall("${element[0]}")`)
+                     btn.setAttribute("onclick", `createCall('${element[0]}')`)
                      userBox.appendChild(btn)
                     resgisteredUsers.push(element[0])
                     }
